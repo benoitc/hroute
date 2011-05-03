@@ -1,3 +1,4 @@
 gevent>=0.13.4
 setproctitle>=1.1.2
-tproxy>=0.3.0
+tproxy>=0.5.0
+http-parser>=0.3.3
