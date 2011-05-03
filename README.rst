@@ -9,6 +9,9 @@ Features
 - location rewriting
 - links rewriting to handle proxy / paths
 - simple configuration
+- vhosts support
+- logging (coming)
+- authentification (coming)
 
 
 Usage:
