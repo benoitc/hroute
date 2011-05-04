@@ -80,13 +80,10 @@ class RewriteResponse(object):
             return False, None
        
         # handle redirection
-        status_int = self.parser.status()
+        status_int = self.parser.status_code()
 
-        if status_int in ('301', '302', '303') and \
-                self.extra.get('follow_redirect'):
-
+        if status_int in (301, 302, 303):
             location = headers.get('location')
-
             return False, headers_lines(self.parser, headers)
 
         # rewrite location
@@ -125,27 +122,30 @@ class RewriteResponse(object):
         self.resp.send(headers)
         if rewrite:
             body = self.parser.body_string()
+            if not body:
+                rewritten_body = ''
+            else:
+                html = lxml.html.fromstring(body)
 
-            html = lxml.html.fromstring(body)
+                # rewrite links to absolute 
+                html.rewrite_links(self.rewrite_link)
 
-            # rewrite links to absolute 
-            html.rewrite_links(self.rewrite_link)
+                # add base
+                absolute_path = "%s%s" % (self.local_base,
+                        self.extra.get('path', ''))
+                
+                old_base = html.find(".//base")
+                base = etree.Element("base")
+                base.attrib['href'] = absolute_path 
 
-
-            # add base
-            absolute_path = "%s%s" % (self.local_base,
-                    self.extra.get('path', ''))
+                if not old_base:
+                    head = html.find(".//head")
+                    head.append(base)
             
-            old_base = html.find(".//base")
-            base = etree.Element("base")
-            base.attrib['href'] = absolute_path 
-
-            if not old_base:
-                head = html.find(".//head")
-                head.append(base)
+                # modify response
+                rewritten_body = lxml.html.tostring(html)
             
-            # modify response
-            rewritten_body = lxml.html.tostring(html)
+            # finally send response.
             headers.append('Content-Length: %s\r\n' %
                         len(rewritten_body))
 
