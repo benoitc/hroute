@@ -42,7 +42,7 @@ class HttpRoute(object):
                 for route, spec, conf in routes:
                     m = spec.match(path)
                     if m:
-                        extra = DEFAULT_CONTROLS
+                        extra = DEFAULT_CONTROLS.copy()
                         extra.update(conf)
 
                         if m.group(1):
@@ -54,6 +54,7 @@ class HttpRoute(object):
                         extra.update({
                             "remote": remote,
                             "host":remote[0]})
+
                         break
         if not remote:
             return {'close': 'HTTP/1.1 502 Gateway Error\r\n\r\nNo target found'}

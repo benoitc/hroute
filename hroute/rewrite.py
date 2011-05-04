@@ -18,7 +18,7 @@ except ImportError:
 
 absolute_http_url_re = re.compile(r"^https?://", re.I)
 
-from .util import normalize
+from .util import headers_lines, normalize, send_body
 
 HTML_CTYPES = ( 
     "text/html",
@@ -47,13 +47,6 @@ def rewrite_headers(parser, location, values=None):
 
     return "".join(new_headers) + "\r\n"
 
-
-def write_chunk(to, data):
-    chunk = "".join(("%X\r\n" % len(data), data, "\r\n"))
-    to.write(chunk)
-
-def write(to, data):
-    to.write(data)
 
 class RewriteResponse(object):
 
@@ -85,7 +78,17 @@ class RewriteResponse(object):
             headers = self.parser.headers()
         except (ParserError, NoMoreData):
             return False, None
-        
+       
+        # handle redirection
+        status_int = self.parser.status()
+
+        if status_int in ('301', '302', '303') and \
+                self.extra.get('follow_redirect'):
+
+            location = headers.get('location')
+
+            return False, headers_lines(self.parser, headers)
+
         # rewrite location
         prefix = self.extra.get('prefix')
         if prefix is not None and "location" in headers:
@@ -103,14 +106,7 @@ class RewriteResponse(object):
         else:
             rewrite = False
         headers['connection'] = 'close'
-        
-            
-        httpver = "HTTP/%s" % ".".join(map(str, self.parser.version()))
-        new_headers = ["%s %s\r\n" % (httpver, self.parser.status())]
-        new_headers.extend(["%s: %s\r\n" % (hname, hvalue) \
-            for hname, hvalue in headers.items()])
-
-        return (rewrite, new_headers)
+        return (rewrite, headers_lines(self.parser, headers))
 
     def rewrite_link(self, link):
         if not absolute_http_url_re.match(link):
@@ -157,17 +153,4 @@ class RewriteResponse(object):
         else:
             self.resp.send("".join(headers) + "\r\n")
             body = self.parser.body_file()
-
-            if  self.parser.is_chunked():
-                _write = write_chunk
-            else:
-                _write = write
-
-            while True:
-                data = body.read(io.DEFAULT_BUFFER_SIZE)
-                if not data:
-                    break
-                _write(self.resp, data)
-
-            if self.parser.is_chunked():
-                _write(self.resp, "")
+            send_body(self.resp, body, self.parser.is_chunked())

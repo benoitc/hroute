@@ -10,11 +10,11 @@ import io
 import socket
 
 from http_parser.parser import HttpParser
-from http_parser.http import HttpStream, NoMoreData
+from http_parser.http import HttpStream, NoMoreData, ParserError
 
 from .lookup import HttpRoute
-from .rewrite import rewrite_headers, RewriteResponse, write,\
-write_chunk
+from .rewrite import rewrite_headers, RewriteResponse
+from .util import headers_lines, send_body
 
 class Route(object):
 
@@ -82,34 +82,15 @@ class Route(object):
                 rw.execute()
 
             else:
-                while True:
-                    parser = HttpStream(resp)
-                    headers = self.parser.headers()
-                    headers['connection'] = 'close'
-                    
-                    httpver = "HTTP/%s" % ".".join(map(str, 
-                        self.parser.version()))
-                    new_headers = ["%s %s\r\n" % (httpver, 
-                        self.parser.status())]
+                parser = HttpStream(resp)
+                headers = parser.headers()
+                headers['connection'] = 'close'
+                
+                new_headers = headers_lines(parser, headers)
+                resp.send("".join(new_headers) + "\r\n")
 
-                    new_headers.extend(["%s: %s\r\n" % (hname, hvalue) \
-                            for hname, hvalue in headers.items()])
-                            
-                    resp.send("".join(new_headers) + "\r\n")
-
-                    if  self.parser.is_chunked():
-                        _write = write_chunk
-                    else:
-                        _write = write
-
-                    while True:
-                        data = body.read(io.DEFAULT_BUFFER_SIZE)
-                        if not data:
-                            break
-                        _write(resp, data)
-
-                    if self.parser.is_chunked():
-                        _write(resp, "")
+                body = parser.body_file()
+                send_body(resp, body, parser.is_chunked())
         except (socket.error, NoMoreData, ParserError):
             pass
         
