@@ -125,6 +125,7 @@ class RewriteResponse(object):
         self.resp.send(headers)
         if rewrite:
             body = self.parser.body_string()
+
             html = lxml.html.fromstring(body)
 
             # rewrite links to absolute 

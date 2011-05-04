@@ -90,7 +90,6 @@ class RouteConfig(config.Config):
                 
                 _routes.sort()
                 _routes.reverse()
-                print _routes
                 self.routes[name] = _routes
             self.hosts.sort()
             self.hosts.reverse()
