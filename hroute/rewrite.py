@@ -14,7 +14,7 @@ try:
 except ImportError:
     raise ImportError("""lxml isn't installed
 
-        pip installl lxml
+        pip install lxml
 """)
 
 absolute_http_url_re = re.compile(r"^https?://", re.I)
