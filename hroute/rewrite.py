@@ -102,7 +102,7 @@ class RewriteResponse(object):
                     del headers[h]
         else:
             rewrite = False
-
+        headers['connection'] = 'close'
         
             
         httpver = "HTTP/%s" % ".".join(map(str, self.parser.version()))

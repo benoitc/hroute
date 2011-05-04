@@ -39,8 +39,8 @@ class HttpRoute(object):
                 routes = self.cfg.routes.get(name)
                 if not routes:
                     break
-                for route, conf in routes:
-                    m = route.match(path)
+                for route, spec, conf in routes:
+                    m = spec.match(path)
                     if m:
                         extra = DEFAULT_CONTROLS
                         extra.update(conf)

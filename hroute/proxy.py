@@ -13,7 +13,8 @@ from http_parser.parser import HttpParser
 from http_parser.http import HttpStream, NoMoreData
 
 from .lookup import HttpRoute
-from .rewrite import rewrite_headers, RewriteResponse
+from .rewrite import rewrite_headers, RewriteResponse, write,\
+write_chunk
 
 class Route(object):
 
@@ -35,9 +36,10 @@ class Route(object):
         return self._route.execute(host, parser.get_path())
 
     def rewrite_request(self, req, extra):
+    
         try:
-            if extra.get('rewrite_location', True):
-                while True:
+            while True:
+                if extra.get('rewrite_location', True):
                     parser = HttpStream(req)
                     
                     prefix = extra.get('prefix', '')
@@ -62,34 +64,53 @@ class Route(object):
                         if not data:
                             break
                         req.send(data)
-            else:
-                while True:
-                    data = req.read(io.DEFAULT_BUFFER_SIZE)
-                    if not data:
-                        break
-                    req.write(data) 
+                else:
+                    while True:
+                        data = req.read(io.DEFAULT_BUFFER_SIZE)
+                        if not data:
+                            break
+                        req.write(data) 
         except (socket.error, NoMoreData):
             pass
 
     def rewrite_response(self, resp, extra):
         try:
             if extra.get('rewrite_response', False):
-                while True:
-                    parser = HttpStream(resp, decompress=True)
-                    
-                    rw = RewriteResponse(parser, resp, extra)
-                    rw.execute()
+                parser = HttpStream(resp, decompress=True)
+                
+                rw = RewriteResponse(parser, resp, extra)
+                rw.execute()
 
-                    if not parser.should_keep_alive():
-                        # close the connection.
-                        break
             else:
                 while True:
-                    data = resp.read(io.DEFAULT_BUFFER_SIZE)
-                    if not data:
-                        break
-                    resp.write(data)
-        except (socket.error, NoMoreData):
+                    parser = HttpStream(resp)
+                    headers = self.parser.headers()
+                    headers['connection'] = 'close'
+                    
+                    httpver = "HTTP/%s" % ".".join(map(str, 
+                        self.parser.version()))
+                    new_headers = ["%s %s\r\n" % (httpver, 
+                        self.parser.status())]
+
+                    new_headers.extend(["%s: %s\r\n" % (hname, hvalue) \
+                            for hname, hvalue in headers.items()])
+                            
+                    resp.send("".join(new_headers) + "\r\n")
+
+                    if  self.parser.is_chunked():
+                        _write = write_chunk
+                    else:
+                        _write = write
+
+                    while True:
+                        data = body.read(io.DEFAULT_BUFFER_SIZE)
+                        if not data:
+                            break
+                        _write(resp, data)
+
+                    if self.parser.is_chunked():
+                        _write(resp, "")
+        except (socket.error, NoMoreData, ParserError):
             pass
         
     def proxy_error(self, client, e):

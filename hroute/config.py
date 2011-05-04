@@ -81,13 +81,16 @@ class RouteConfig(config.Config):
                     route_conf['listen'] = self.address
                     route_conf['listen_ssl'] = self.ssl_keyfile is not None
                     if 'remote' in route_conf:
+                        
                         if ROUTE_RE.match(route):
-                            route = re.compile(route)
+                            spec = re.compile(route)
                         else:
-                            route = re.compile("%s(.*)" % route)
-                        _routes.append((route, route_conf))
+                            spec = re.compile("%s(.*)" % route)
+                        _routes.append((route, spec, route_conf))
+                
                 _routes.sort()
                 _routes.reverse()
+                print _routes
                 self.routes[name] = _routes
             self.hosts.sort()
             self.hosts.reverse()
