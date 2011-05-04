@@ -29,7 +29,6 @@ def write_chunk(to, data):
 def write(to, data):
     to.write(data)
 
-
 def send_body(to, body, chunked=False):
     if chunked:
         _write = write_chunk

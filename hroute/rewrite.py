@@ -5,6 +5,7 @@
 
 import io
 import re
+import urlparse
 
 from http_parser.http import ParserError, NoMoreData
 try:
@@ -84,6 +85,14 @@ class RewriteResponse(object):
 
         if status_int in (301, 302, 303):
             location = headers.get('location')
+            if location.startswith(self.base):
+                rel = "%s%s" % (self.prefix, location.split(self.base)[1])
+                headers['location'] = urlparse.urljoin(self.local_base, rel)
+            elif location.startswith("/"):
+                # bugged server
+                rel = "%s%s" % (self.prefix, location)
+                headers['location'] = urlparse.urljoin(self.local_base, rel)
+
             return False, headers_lines(self.parser, headers)
 
         # rewrite location
@@ -95,7 +104,11 @@ class RewriteResponse(object):
             headers['location'] = "%s%s" % (self.prefix, location)
 
         # can we rewrite the links?
-        if headers.get('content-type') in HTML_CTYPES:
+        ctype = headers.get('content-type')
+        if ctype is not None:
+            ctype = ctype.split(';', 1)[0].strip()
+
+        if ctype in HTML_CTYPES:
             rewrite = True
             for h in ('content-length', 'transfer-encoding'):
                 if h in headers:
@@ -107,11 +120,10 @@ class RewriteResponse(object):
 
     def rewrite_link(self, link):
         if not absolute_http_url_re.match(link):
-            return normalize(self.prefix, link)
-        else:
-            if link.startswith(self.base):
-                rel = link.split(self.base)[1]
-                return normalize(self.prefix, link)
+            link = normalize(self.prefix, link)
+        elif link.startswith(self.base):
+            rel = "%s%s" % (self.prefix, link.split(self.base)[1])
+            link = urlparse.urljoin(self.local_base, rel)
         return link
 
     def execute(self):
