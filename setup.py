@@ -22,7 +22,6 @@ CLASSIFIERS = [
         'Programming Language :: Python',
         'Topic :: Internet',
         'Topic :: Internet :: Proxy Servers',
-        'Topic :: Internet :: Proxy Servers'
         'Topic :: Utilities',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: System :: Networking'
