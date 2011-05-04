@@ -131,7 +131,6 @@ class RewriteResponse(object):
         if not headers:
             return
         
-        self.resp.send(headers)
         if rewrite:
             body = self.parser.body_string()
             if not body:
