@@ -118,6 +118,8 @@ class RewriteResponse(object):
     def execute(self):
         rewrite, headers = self.rewrite_headers()
         if not headers:
+            msg = "HTTP/1.1 502 Gateway Error\r\n\r\n bad request."
+            self.resp.send(msg)
             return
         
         if rewrite:

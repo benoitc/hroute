@@ -18,7 +18,9 @@ def normalize(prefix, link):
     if link.startswith("#"):
         return link
 
-    path = posixpath.normpath(os.path.join(prefix, link))
+    if not link.startswith('/'): 
+        link = "/%s" % link
+    path = posixpath.normpath("%s%s" % (prefix, link))
     return  path
 
 def headers_lines(parser, headers):
