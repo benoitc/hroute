@@ -45,7 +45,7 @@ def rewrite_headers(parser, location, values=None):
     new_headers.extend(["%s: %s\r\n" % (hname, hvalue) \
             for hname, hvalue in headers.items()])
 
-    return "".join(new_headers) + "\r\n"
+    return bytes("".join(new_headers) + "\r\n")
 
 
 class RewriteResponse(object):
@@ -145,21 +145,21 @@ class RewriteResponse(object):
                     head.append(base)
             
                 # modify response
-                rewritten_body = lxml.html.tostring(html)
+                rewritten_body = bytes(lxml.html.tostring(html))
             
             # finally send response.
             headers.extend([
                 'Content-Length: %s\r\n' % len(rewritten_body),
                 "\r\n"])
            
-            self.resp.send("".join(headers))
+            self.resp.writeall(bytes("".join(headers)))
             stream = io.BytesIO(rewritten_body)
             while True:
                 data = stream.read(io.DEFAULT_BUFFER_SIZE)
                 if not data:
                     break
-                self.resp.send(data)
+                self.resp.writeall(data)
         else:
-            self.resp.send("".join(headers) + "\r\n")
+            self.resp.writeall(bytes("".join(headers) + "\r\n"))
             body = self.parser.body_file()
             send_body(self.resp, body, self.parser.is_chunked())

@@ -49,10 +49,10 @@ def base_uri(host, is_ssl=False):
 def write_chunk(to, data):
     """ send a chunk encoded """
     chunk = "".join(("%X\r\n" % len(data), data, "\r\n"))
-    to.write(chunk)
+    to.writeall(chunk)
 
 def write(to, data):
-    to.write(data)
+    to.writeall(data)
 
 def send_body(to, body, chunked=False):
     if chunked:

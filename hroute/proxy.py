@@ -53,19 +53,20 @@ class Route(object):
                         break
 
                     extra['path'] = parser.path()
-                    req.send(headers)
+
+                    req.writeall(headers)
                     body = parser.body_file()
                     while True:
                         data = body.read(8192)
                         if not data:
                             break
-                        req.send(data)
+                        req.writeall(data)
                 else:
                     while True:
                         data = req.read(io.DEFAULT_BUFFER_SIZE)
                         if not data:
                             break
-                        req.write(data) 
+                        req.writeall(data) 
         except (socket.error, NoMoreData):
             pass
 
@@ -83,7 +84,7 @@ class Route(object):
                 headers['connection'] = 'close'
                 
                 new_headers = headers_lines(parser, headers)
-                resp.send("".join(new_headers) + "\r\n")
+                resp.writeall("".join(new_headers) + "\r\n")
 
                 body = parser.body_file()
                 send_body(resp, body, parser.is_chunked())
