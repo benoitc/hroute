@@ -42,6 +42,10 @@ folder you want::
     {
         "all": {
             "routes": {
+                "/": {
+                    "remote": "benoitc.io:80",
+                    "rewrite_response": true
+                },
                 "/local": {
                     "remote": "127.0.0.1:8000"
                 },
@@ -52,7 +56,10 @@ folder you want::
                     "remote": "gunicorn.org:80",
                     "rewrite_response": true
                 },
-
+                "/aquarelle": {
+                    "remote": "www.aquarelle.com:80",
+                    "rewrite_response": true
+                }
             }
         }
     }
