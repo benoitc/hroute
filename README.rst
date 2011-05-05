@@ -36,8 +36,9 @@ Install
 Usage
 -----
 
-Create a configuration file in /var/spool/hroute (default path) or any
-folder you want::
+Create a configuration file named **route** in /var/spool/hroute
+(default path) or any folder you want, for example in /tmp, put the
+following configuration::
 
     {
         "all": {
@@ -67,9 +68,11 @@ folder you want::
 
 then launch hroute::
 
-    $ hroute -s /var/spool/hroute -w 3
+    $ hroute -s /tmp -w 3
 
-and go on `http://127.0.0.1:5000/gunicorn <http://127.0.0.1:5000/gunicorn>`_. You should see the gunicorn.org website.
+and go on `http://127.0.0.1:5000/gunicorn
+<http://127.0.0.1:5000/gunicorn>`_. You should see the gunicorn.org
+website.
 
 
 More features soon.
