@@ -48,7 +48,7 @@ class HttpRoute(object):
                                 is_ssl=self.cfg.is_listen_ssl())
 
                         if m.group(1):
-                            extra['prefix'] = path.split(m.group(1))[0]
+                            extra['prefix'] = path.rsplit(m.group(1), 1)[0]
                         else:
                             extra['prefix'] = path
                        
