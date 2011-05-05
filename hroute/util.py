@@ -6,6 +6,9 @@
 import io
 import os
 import posixpath
+import re
+
+absolute_http_url_re = re.compile(r"^https?://", re.I)
 
 def normalize(prefix, link):
     # anchors

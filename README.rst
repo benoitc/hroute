@@ -57,8 +57,9 @@ following configuration::
                     "remote": "gunicorn.org:80",
                     "rewrite_response": true
                 },
-                "/aquarelle": {
-                    "remote": "www.aquarelle.com:80",
+                "/googles": {
+                    "remote": "encrypted.google.com:443",
+                    "ssl": true,
                     "rewrite_response": true
                 }
             }

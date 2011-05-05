@@ -5,8 +5,8 @@
 import os
 import re
 
-
 from tproxy import config
+from tproxy.util import parse_address
 
 try:
     import simplejson as json
@@ -34,6 +34,17 @@ class SpoolDir(config.Setting):
         Used to set hroute rules and users. 
         """
 
+class Hostname(config.Setting):
+    name = "host"
+    section = "Spool Directory"
+    cli = ["--host"]
+    meta = "STRING"
+    validator = config.validate_string
+    default = None 
+    desc = """\
+        default hostname used in rewriting rules. 
+        """
+
 class RouteConfig(config.Config):
 
     def __init__(self, usage=None):
@@ -43,6 +54,29 @@ class RouteConfig(config.Config):
         self.routes = {}
         self.hosts = []
         self.rmtime = None
+
+    def get_host(self):
+        if self.host is not None:
+            host = self.host
+        else:
+            host = self.address[0]
+
+        port = self.address[1]
+
+        if self.address[1] != self.is_listen_ssl() and 443 or 80:
+            host = "%s:%s" % (host, self.address[1])
+
+        return host
+
+    def base_uri(self, host, is_ssl=False):
+        if is_ssl:
+            scheme = "https"
+        else:
+            scheme = "http"
+        return "%s://%s" % (scheme, host)
+
+    def is_listen_ssl(self):
+        return self.ssl_keyfile is not None
 
     def get_spooldir(self):
         if self._spooldir:
@@ -68,6 +102,9 @@ class RouteConfig(config.Config):
         if self.rmtime == mtime:
             return
         self.rmtime = mtime
+        
+        local_base_uri = self.base_uri(self.get_host(),
+                is_ssl=self.is_listen_ssl())
 
         # build rules
         with open(fname, 'r') as f:
@@ -78,10 +115,23 @@ class RouteConfig(config.Config):
                 self.hosts.append((re.compile(host), name))
                 _routes = []
                 for (route, route_conf) in routes.items():
-                    route_conf['listen'] = self.address
-                    route_conf['listen_ssl'] = self.ssl_keyfile is not None
+                    route_conf['local_base_uri'] = local_base_uri
                     if 'remote' in route_conf:
                         
+                        # build base_uri
+                        remote = parse_address(route_conf.get('remote'), 80)
+                        is_ssl = 'ssl' in route_conf
+                        host = remote[0]
+
+
+                        if remote[1] != (is_ssl and 443 or 80):
+                            host = "%s:%s" % (host, remote[1])
+                      
+                        route_conf['host'] = host
+                        route_conf['base_uri'] = self.base_uri(host,
+                                is_ssl=is_ssl)
+                        routes_conf['remote'] = remote
+
                         if ROUTE_RE.match(route):
                             spec = re.compile(route)
                         else:

@@ -4,7 +4,6 @@
 # See the NOTICE for more information.
 
 import io
-import re
 import urlparse
 
 from http_parser.http import ParserError, NoMoreData
@@ -17,9 +16,9 @@ except ImportError:
         pip install lxml
 """)
 
-absolute_http_url_re = re.compile(r"^https?://", re.I)
 
-from .util import headers_lines, normalize, send_body
+from .util import headers_lines, normalize, send_body, \
+absolute_http_url_re
 
 HTML_CTYPES = ( 
     "text/html",
@@ -59,20 +58,8 @@ class RewriteResponse(object):
         if self.prefix is not None and self.prefix.endswith('/'):
             self.prefix = self.prefix[:-1]
 
-        if 'ssl_keyfile' in extra:
-            scheme = "https"
-        else:
-            scheme = "http"
-
-        self.base = "%s://%s" % (scheme, extra['host'])
-        if extra['remote'][1] not in (80, 443):
-            self.base = "%s:%s" % (self.base, extra['remote'][1])
-        
-        self.local_base = "%s://%s%s" % (
-            extra.get('listen_ssl', False) and "https" or "http",
-            extra['listen'][0],
-            extra['listen'][1] in (80, 443) and "" or ":%s" % extra['listen'][1]
-        )
+        self.base = extra['base_uri'] 
+        self.local_base = extra['local_base_uri']
 
     def rewrite_headers(self):
         try:

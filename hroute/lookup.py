@@ -4,16 +4,11 @@
 # See the NOTICE for more information.
 
 import os
-import re
 
 try:
     import simplejson as json
 except ImportError:
     import json
-
-from tproxy.util import parse_address
-
-ROUTE_RE = re.compile("^([^(].*)\(.*\)$")
 
 DEFAULT_CONTROLS =  {
         "rewrite_location": True,
@@ -30,9 +25,9 @@ class HttpRoute(object):
         # refresh routes if needed.
         self.cfg.load_routes()
 
-        remote = None
         extra = {}
         found_name = None
+        route_conf = None
         for rhost, name in self.cfg.hosts:
             if rhost.match(host):
                 found_name = name
@@ -42,21 +37,17 @@ class HttpRoute(object):
                 for route, spec, conf in routes:
                     m = spec.match(path)
                     if m:
+                        route_conf = conf
                         extra = DEFAULT_CONTROLS.copy()
                         extra.update(conf)
-
                         if m.group(1):
                             extra['prefix'] = path.split(m.group(1))[0]
                         else:
                             extra['prefix'] = path
-                        remote = parse_address(conf.get('remote'), 80)
-
-                        extra.update({
-                            "remote": remote,
-                            "host":remote[0]})
-
+                        
+                        route_conf['extra'] = extra
                         break
-        if not remote:
+        if not route_conf:
             return {'close': 'HTTP/1.1 502 Gateway Error\r\n\r\nNo target found'}
 
-        return {'remote': remote, 'extra': extra} 
+        return route_conf 
