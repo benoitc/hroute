@@ -14,7 +14,7 @@ from http_parser.http import HttpStream, NoMoreData, ParserError
 
 from .lookup import HttpRoute
 from .rewrite import rewrite_headers, RewriteResponse
-from .util import headers_lines, send_body
+from .util import headers_lines, send_body, get_host
 
 class Route(object):
 
@@ -26,13 +26,9 @@ class Route(object):
         headers = parser.get_headers()
 
         # get host headers
-        host = None
-        for hdr_name, hdr_value in headers.items():
-            hl = hdr_name.lower()
-            if hl == "host":
-                host = hdr_value
-                break
-        
+        host = headers.get('host', get_host(self.cfg.address,
+            is_ssl=self.cfg.is_listen_ssl()))
+       
         return self._route.execute(host, parser.get_path())
 
     def rewrite_request(self, req, extra):

@@ -10,6 +10,8 @@ try:
 except ImportError:
     import json
 
+from .util import base_uri
+
 DEFAULT_CONTROLS =  {
         "rewrite_location": True,
         "rewrite_response": False
@@ -40,11 +42,16 @@ class HttpRoute(object):
                         route_conf = conf
                         extra = DEFAULT_CONTROLS.copy()
                         extra.update(conf)
+
+                        extra['vhost'] = host
+                        extra['vhost_uri'] = base_uri(host,
+                                is_ssl=self.cfg.is_listen_ssl())
+
                         if m.group(1):
                             extra['prefix'] = path.split(m.group(1))[0]
                         else:
                             extra['prefix'] = path
-                        
+                       
                         route_conf['extra'] = extra
                         break
         if not route_conf:

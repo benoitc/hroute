@@ -59,7 +59,7 @@ class RewriteResponse(object):
             self.prefix = self.prefix[:-1]
 
         self.base = extra['base_uri'] 
-        self.local_base = extra['local_base_uri']
+        self.local_base = extra['vhost_uri']
 
     def rewrite_headers(self):
         try:
@@ -106,7 +106,9 @@ class RewriteResponse(object):
         return (rewrite, headers_lines(self.parser, headers))
 
     def rewrite_link(self, link):
-        if not absolute_http_url_re.match(link):
+        if not absolute_http_url_re.match(link) and \
+                not link.startswith('mailto:') and \
+                not link.startswith('javascript:'):
             link = normalize(self.prefix, link)
         elif link.startswith(self.base):
             rel = "%s%s" % (self.prefix, link.split(self.base)[1])
