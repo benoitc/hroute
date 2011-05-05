@@ -148,10 +148,12 @@ class RewriteResponse(object):
                 rewritten_body = lxml.html.tostring(html)
             
             # finally send response.
-            headers.append('Content-Length: %s\r\n' % len(rewritten_body))
-            headers.extend(["\r\n", rewritten_body])
-            
-            stream = io.BytesIO("".join(headers))
+            headers.extend([
+                'Content-Length: %s\r\n' % len(rewritten_body),
+                "\r\n"])
+           
+            self.resp.send("".join(headers))
+            stream = io.BytesIO(rewritten_body)
             while True:
                 data = stream.read(io.DEFAULT_BUFFER_SIZE)
                 if not data:
