@@ -18,10 +18,10 @@ Requirements
 ------------
 
 - `Python <http://python.org>`_ 2.6 and sup (Python 3 not suppported yet)
-- `gevent <http://gevent.org>`_ >=0.13.4
-- `setproctitle <http://code.google.com/p/py-setproctitle/>`_ >=1.1.2
-- `tproxy  <http://github.com/benoitc/http-parser>`_ >=0.5.0
-- `http-parser <http://github.com/benoitc/http-parser>`_ >=0.3.3
+- `gevent <http://gevent.org>`_ >= 0.13.4
+- `setproctitle <http://code.google.com/p/py-setproctitle/>`_ >= 1.1.2
+- `tproxy  <http://github.com/benoitc/http-parser>`_ >= 0.5.2
+- `http-parser <http://github.com/benoitc/http-parser>`_ >= 0.3.3
 - `lxml <http://lxml.de>`_ 
 
 Install
